@@ -62,7 +62,7 @@ switch ($path) {
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
             $user_data = AuthMiddleware::authenticate();
-            $controller->riwayat($user_data);
+            $controller->riwayat();
         }
         break;
 
@@ -71,7 +71,7 @@ switch ($path) {
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "PUT") {
             $user_data = AuthMiddleware::authenticate();
-            $controller->persetujuan($user_data);
+            $controller->persetujuan();
         }
         break;
 
@@ -104,7 +104,7 @@ switch ($path) {
         $controller = new PengembalianController();
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $user_data = AuthMiddleware::authenticate();
-            $controller->kembalikanAlat($user_data);
+            $controller->kembalikanAlat();
         }
         break;
 
