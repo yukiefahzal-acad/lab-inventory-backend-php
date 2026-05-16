@@ -21,33 +21,26 @@ class PeminjamanController {
         $this->denda = new Denda($this->db);
     }
 
-    public function booking() {
+    public function booking($user_data) {
         $data = json_decode(file_get_contents("php://input"));
 
-        if(!empty($data->user_id) && !empty($data->alat_id) && !empty($data->tanggal_pinjam) && !empty($data->tanggal_kembali_rencana)) {
-            // UserID validation
-            $this->user->id = $data->user_id;
-            if(!$this->user->checkExists()) {
-                http_response_code(404);
-                echo json_encode(array("message" => "User tidak ditemukan."));
-                return;
-            }
+        if(!empty($data->alat_id) && !empty($data->tanggal_pinjam) && !empty($data->tanggal_kembali_rencana)) {
+            
+            $logged_in_user_id = $user_data->id;
 
-            // Fines validation
-            if($this->denda->cekDendaBelumLunas($data->user_id)) {
+            if($this->denda->cekDendaBelumLunas($logged_in_user_id)) {
                 http_response_code(403);
                 echo json_encode(array("message" => "Anda memiliki denda yang belum lunas. Silakan selesaikan denda terlebih dahulu."));
                 return;
             }
             
-            // AlatID and stock validation
             $this->alat->id = $data->alat_id;
             $this->alat->readOne();
             
             $total_booked = $this->peminjaman->checkAvailability($data->alat_id, $data->tanggal_pinjam);
             
             if($this->alat->stok_tersedia > $total_booked) {
-                $this->peminjaman->user_id = $data->user_id;
+                $this->peminjaman->user_id = $logged_in_user_id;
                 $this->peminjaman->alat_id = $data->alat_id;
                 $this->peminjaman->tanggal_pinjam = $data->tanggal_pinjam;
                 $this->peminjaman->tanggal_kembali_rencana = $data->tanggal_kembali_rencana;

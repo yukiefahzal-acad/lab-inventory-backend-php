@@ -5,6 +5,8 @@ header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
+require_once 'middleware/AuthMiddleware.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -50,7 +52,8 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $controller->booking();
+            $user_data = AuthMiddleware::authenticate();
+            $controller->booking($user_data);
         }
         break;
 
@@ -58,7 +61,8 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
-            $controller->riwayat();
+            $user_data = AuthMiddleware::authenticate();
+            $controller->riwayat($user_data);
         }
         break;
 
@@ -66,7 +70,8 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "PUT") {
-            $controller->persetujuan();
+            $user_data = AuthMiddleware::authenticate();
+            $controller->persetujuan($user_data);
         }
         break;
 
@@ -86,11 +91,20 @@ switch ($path) {
         }
         break;
 
+    case '/api/logout':
+        require 'controllers/AuthController.php';
+        $controller = new AuthController();
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $controller->logout();
+        }
+        break;
+
     case '/api/pengembalian':
         require 'controllers/PengembalianController.php';
         $controller = new PengembalianController();
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $controller->kembalikanAlat();
+            $user_data = AuthMiddleware::authenticate();
+            $controller->kembalikanAlat($user_data);
         }
         break;
 
