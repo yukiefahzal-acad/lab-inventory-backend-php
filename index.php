@@ -116,6 +116,30 @@ switch ($path) {
         }
         break;
         
+    case '/api/admin/denda':
+        require 'controllers/DendaController.php';
+        $controller = new DendaController();
+        if ($_SERVER["REQUEST_METHOD"] == "GET") {
+            $controller->index(); 
+        }
+        break;
+
+    case '/api/user/denda':
+        require 'controllers/DendaController.php';
+        $controller = new DendaController();
+        if ($_SERVER["REQUEST_METHOD"] == "GET") {
+            $user_data = AuthMiddleware::authenticate();
+            $controller->userDenda($user_data); 
+        }
+        break;
+
+    case '/api/admin/denda/lunas':
+        require 'controllers/DendaController.php';
+        $controller = new DendaController();
+        if ($_SERVER["REQUEST_METHOD"] == "PUT") {
+            $controller->pelunasan();
+        }
+        break;
 
     default:
         http_response_code(404);
