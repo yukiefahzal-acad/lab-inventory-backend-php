@@ -45,7 +45,7 @@ class AuthMiddleware {
     public static function authorizeRole($allowed_roles) {
         $user_data = self::authenticate();
         
-        if (!in_array($user_data->role, $allowed_roles)) {
+        if (!in_array(strtolower($user_data->role), array_map('strtolower', $allowed_roles))) {
             http_response_code(403);
             echo json_encode(array("message" => "Akses ditolak. Anda tidak memiliki izin (Hak Akses Terbatas)."));
             exit();

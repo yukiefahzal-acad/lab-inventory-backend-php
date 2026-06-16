@@ -62,13 +62,15 @@ class Peminjaman {
     }
 
     public function updateStatus() {
-        $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
+        $query = "UPDATE " . $this->table_name . " SET status = :status, catatan_pinjaman = :catatan_pinjaman WHERE id = :id";
         $stmt = $this->conn->prepare($query);
 
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->id = htmlspecialchars(strip_tags($this->id));
+        $this->catatan_pinjaman = htmlspecialchars(strip_tags($this->catatan_pinjaman));
 
         $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":catatan_pinjaman", $this->catatan_pinjaman);
         $stmt->bindParam(":id", $this->id);
 
         if($stmt->execute()) {

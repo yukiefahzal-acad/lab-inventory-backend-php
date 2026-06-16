@@ -27,10 +27,15 @@ if (strpos($path, '/index.php') === 0) {
 }
 
 $public_routes = ['/api/login', '/api/register'];
+$admin_routes = ['/api/peminjaman/persetujuan', '/api/admin/denda', '/api/admin/denda/lunas'];
 $user_data = null;
 
 if (!in_array($path, $public_routes)) {
-    $user_data = AuthMiddleware::authenticate();
+    if (in_array($path, $admin_routes) || ($path === '/api/alat' && $_SERVER['REQUEST_METHOD'] !== 'GET')) {
+        $user_data = AuthMiddleware::authorizeRole(['Admin']);
+    } else {
+        $user_data = AuthMiddleware::authenticate();
+    }
 }
 
 switch ($path) {
@@ -76,7 +81,7 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
-            $controller->riwayat();
+            $controller->riwayat($user_data);
         }
         break;
 

@@ -4,26 +4,35 @@ require_once 'models/Denda.php';
 require_once 'models/Alat.php';
 require_once 'utils/denda_helper.php';
 
-class PengembalianController {
+class PengembalianController
+{
     private $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         $database = new Database();
         $this->db = $database->getConnection();
     }
 
-    public function kembalikanAlat() {
+    public function kembalikanAlat()
+    {
         $data = json_decode(file_get_contents("php://input"));
 
-        if(!empty($data->peminjaman_id) && !empty($data->tanggal_kembali_aktual) && !empty($data->kondisi_alat)) {
+        if (!empty($data->peminjaman_id) && !empty($data->tanggal_kembali_aktual) && !empty($data->kondisi_alat)) {
+            $valid_kondisi = ['baik', 'rusak', 'hilang'];
+            if (!in_array($data->kondisi_alat, $valid_kondisi)) {
+                http_response_code(400);
+                echo json_encode(array("message" => "Kondisi alat tidak valid. Hanya menerima baik, rusak, atau hilang."));
+                return;
+            }
             $query = "SELECT tanggal_kembali_rencana, alat_id, jumlah, status FROM tb_peminjaman WHERE id = ?";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(1, $data->peminjaman_id);
             $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if($row) {
-                if($row['status'] !== 'Disetujui') {
+            if ($row) {
+                if ($row['status'] !== 'Disetujui') {
                     http_response_code(400);
                     echo json_encode(array("message" => "Pengembalian gagal."));
                     return;
@@ -40,11 +49,15 @@ class PengembalianController {
                 $alat->readOne();
 
                 $tarif_denda_harian = isset($alat->denda_per_hari) ? $alat->denda_per_hari : 0;
-                $denda_terlambat = DendaHelper::hitungDendaKeterlambatan($tgl_rencana, $data->tanggal_kembali_aktual, $tarif_denda_harian); 
-                
+                $denda_terlambat = DendaHelper::hitungDendaKeterlambatan($tgl_rencana, $data->tanggal_kembali_aktual, $tarif_denda_harian);
+
                 $denda_rusak = 0;
-                if($data->kondisi_alat === 'Rusak') {
+                $denda_hilang = 0;
+                if ($data->kondisi_alat === 'rusak') {
                     $denda_rusak = isset($alat->denda_rusak) ? $alat->denda_rusak : 0;
+                } elseif ($data->kondisi_alat === 'hilang') {
+                    $denda_hilang = isset($alat->denda_hilang) ? $alat->denda_hilang : 0;
+                    $denda_terlambat = 0;
                 }
 
                 $queryUpdate = "UPDATE tb_peminjaman SET tanggal_kembali_aktual = ?, status = 'Dikembalikan', jumlah_kembali = ?, catatan_pengembalian = ? WHERE id = ?";
@@ -55,14 +68,16 @@ class PengembalianController {
                 $stmtUpdate->bindParam(4, $data->peminjaman_id);
                 $stmtUpdate->execute();
 
-                $alat->stok_tersedia += $jumlah_kembali;
-                $alat->updateStok();
+                if ($data->kondisi_alat !== 'hilang') {
+                    $alat->stok_tersedia += $jumlah_kembali;
+                    $alat->updateStok();
+                }
 
-                if($denda_terlambat > 0 || $denda_rusak > 0) {
+                if ($denda_terlambat > 0 || $denda_rusak > 0 || $denda_hilang > 0) {
                     $denda = new Denda($this->db);
                     $denda->peminjaman_id = $data->peminjaman_id;
-                    
-                    if($denda_terlambat > 0) {
+
+                    if ($denda_terlambat > 0) {
                         $denda->jenis_denda = 'Terlambat';
                         $denda->jumlah_denda = $denda_terlambat;
                         $denda->status_bayar = 'Belum Lunas';
@@ -70,11 +85,18 @@ class PengembalianController {
                         $denda->create();
                     }
 
-                    if($denda_rusak > 0) {
-                        $denda->jenis_denda = 'Rusak';
+                    if ($denda_rusak > 0) {
+                        $denda->jenis_denda = 'rusak';
                         $denda->jumlah_denda = $denda_rusak;
                         $denda->status_bayar = 'Belum Lunas';
                         $denda->keterangan = 'Alat dikembalikan dalam kondisi rusak.';
+                        $denda->create();
+                    }
+                    if ($denda_hilang > 0) {
+                        $denda->jenis_denda = 'hilang';
+                        $denda->jumlah_denda = $denda_hilang;
+                        $denda->status_bayar = 'Belum Lunas';
+                        $denda->keterangan = 'Alat hilang selama peminjaman.';
                         $denda->create();
                     }
                 }
@@ -83,7 +105,8 @@ class PengembalianController {
                 echo json_encode(array(
                     "message" => "Pengembalian berhasil diproses.",
                     "total_denda_terlambat" => $denda_terlambat,
-                    "total_denda_rusak" => $denda_rusak
+                    "total_denda_rusak" => $denda_rusak,
+                    "total_denda_hilang" => $denda_hilang
                 ));
             } else {
                 http_response_code(404);
