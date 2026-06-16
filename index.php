@@ -26,6 +26,13 @@ if (strpos($path, '/index.php') === 0) {
     $path = substr($path, strlen('/index.php'));
 }
 
+$public_routes = ['/api/login', '/api/register'];
+$user_data = null;
+
+if (!in_array($path, $public_routes)) {
+    $user_data = AuthMiddleware::authenticate();
+}
+
 switch ($path) {
     case '/api/alat':
         require 'controllers/AlatController.php';
@@ -61,7 +68,6 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $user_data = AuthMiddleware::authenticate();
             $controller->booking($user_data);
         }
         break;
@@ -70,7 +76,6 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
-            $user_data = AuthMiddleware::authenticate();
             $controller->riwayat();
         }
         break;
@@ -79,7 +84,6 @@ switch ($path) {
         require 'controllers/PeminjamanController.php';
         $controller = new PeminjamanController();
         if ($_SERVER["REQUEST_METHOD"] == "PUT") {
-            $user_data = AuthMiddleware::authenticate();
             $controller->persetujuan();
         }
         break;
@@ -100,19 +104,10 @@ switch ($path) {
         }
         break;
 
-    case '/api/logout':
-        require 'controllers/AuthController.php';
-        $controller = new AuthController();
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $controller->logout();
-        }
-        break;
-
     case '/api/pengembalian':
         require 'controllers/PengembalianController.php';
         $controller = new PengembalianController();
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $user_data = AuthMiddleware::authenticate();
             $controller->kembalikanAlat();
         }
         break;
@@ -124,12 +119,12 @@ switch ($path) {
             $controller->pelunasan();
         }
         break;
-        
+
     case '/api/admin/denda':
         require 'controllers/DendaController.php';
         $controller = new DendaController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
-            $controller->index(); 
+            $controller->index();
         }
         break;
 
@@ -137,8 +132,7 @@ switch ($path) {
         require 'controllers/DendaController.php';
         $controller = new DendaController();
         if ($_SERVER["REQUEST_METHOD"] == "GET") {
-            $user_data = AuthMiddleware::authenticate();
-            $controller->userDenda($user_data); 
+            $controller->userDenda($user_data);
         }
         break;
 

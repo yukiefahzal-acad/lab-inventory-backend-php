@@ -44,7 +44,6 @@ class AlatController {
             $this->alat->spesifikasi = isset($data->spesifikasi) ? $data->spesifikasi : "";
             $this->alat->stok_total = $data->stok_total;
             $this->alat->stok_tersedia = $data->stok_total;
-            $this->alat->status = isset($data->status) ? $data->status : "Baik";
             
             $clean_kode_alat = preg_replace('/[^A-Za-z0-9\-]/', '', $data->kode_alat);
             $this->alat->qr_code = "QR_" . $clean_kode_alat . "_" . uniqid();
@@ -82,7 +81,6 @@ class AlatController {
             $this->alat->foto = isset($data->foto) ? $data->foto : "";
             $this->alat->stok_total = isset($data->stok_total) ? $data->stok_total : 0;
             $this->alat->stok_tersedia = isset($data->stok_tersedia) ? $data->stok_tersedia : 0;
-            $this->alat->status = isset($data->status) ? $data->status : "Baik";
             $this->alat->kategori = isset($data->kategori) ? $data->kategori : "";
             $this->alat->denda_per_hari = isset($data->denda_per_hari) ? $data->denda_per_hari : 0;
             $this->alat->denda_rusak = isset($data->denda_rusak) ? $data->denda_rusak : 0;

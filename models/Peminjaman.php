@@ -10,6 +10,10 @@ class Peminjaman {
     public $tanggal_kembali_rencana;
     public $tanggal_kembali_aktual;
     public $status;
+    public $jumlah;
+    public $jumlah_kembali;
+    public $catatan_pinjaman;
+    public $catatan_pengembalian;
     public $error;
 
     public function __construct($db) {
@@ -29,7 +33,7 @@ class Peminjaman {
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET user_id=:user_id, alat_id=:alat_id, tanggal_pinjam=:tanggal_pinjam, tanggal_kembali_rencana=:tanggal_kembali_rencana, status=:status";
+        $query = "INSERT INTO " . $this->table_name . " SET user_id=:user_id, alat_id=:alat_id, tanggal_pinjam=:tanggal_pinjam, tanggal_kembali_rencana=:tanggal_kembali_rencana, status=:status, jumlah=:jumlah, catatan_pinjaman=:catatan_pinjaman";
         
         $stmt = $this->conn->prepare($query);
 
@@ -38,12 +42,16 @@ class Peminjaman {
         $this->tanggal_pinjam = htmlspecialchars(strip_tags($this->tanggal_pinjam));
         $this->tanggal_kembali_rencana = htmlspecialchars(strip_tags($this->tanggal_kembali_rencana));
         $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->jumlah = htmlspecialchars(strip_tags($this->jumlah));
+        $this->catatan_pinjaman = htmlspecialchars(strip_tags($this->catatan_pinjaman));
 
         $stmt->bindParam(":user_id", $this->user_id);
         $stmt->bindParam(":alat_id", $this->alat_id);
         $stmt->bindParam(":tanggal_pinjam", $this->tanggal_pinjam);
         $stmt->bindParam(":tanggal_kembali_rencana", $this->tanggal_kembali_rencana);
         $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":jumlah", $this->jumlah);
+        $stmt->bindParam(":catatan_pinjaman", $this->catatan_pinjaman);
 
         if($stmt->execute()) {
             return true;
@@ -69,15 +77,25 @@ class Peminjaman {
         return false;
     }
 
-    public function readHistory($user_id = null) {
-        $query = "SELECT p.id, p.tanggal_pinjam, p.tanggal_kembali_rencana, p.tanggal_kembali_aktual, p.status, 
+    public function readHistory($user_id = null, $search = "") {
+        $query = "SELECT p.*, 
                          u.nama as nama_mahasiswa, a.nama_alat 
                   FROM " . $this->table_name . " p
                   LEFT JOIN tb_users u ON p.user_id = u.id
                   LEFT JOIN tb_alat a ON p.alat_id = a.id";
         
+        $conditions = array();
+
         if($user_id != null) {
-            $query .= " WHERE p.user_id = :user_id";
+            $conditions[] = "p.user_id = :user_id";
+        }
+
+        if(!empty($search)) {
+            $conditions[] = "(u.nama LIKE :search OR a.nama_alat LIKE :search)";
+        }
+
+        if(count($conditions) > 0) {
+            $query .= " WHERE " . implode(' AND ', $conditions);
         }
         
         $query .= " ORDER BY p.tanggal_pinjam DESC";
@@ -87,6 +105,11 @@ class Peminjaman {
         if($user_id != null) {
             $user_id = htmlspecialchars(strip_tags($user_id));
             $stmt->bindParam(":user_id", $user_id);
+        }
+
+        if(!empty($search)) {
+            $search_param = "%" . htmlspecialchars(strip_tags($search)) . "%";
+            $stmt->bindParam(":search", $search_param);
         }
         
         $stmt->execute();

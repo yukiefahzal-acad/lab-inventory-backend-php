@@ -18,8 +18,8 @@ class AuthController {
     public function login() {
         $data = json_decode(file_get_contents("php://input"));
 
-        if(!empty($data->nim_nip) && !empty($data->password)) {
-            $this->user->nim_nip = $data->nim_nip;
+        if(!empty($data->email) && !empty($data->password)) {
+            $this->user->email = $data->email;
             $this->user->password = $data->password;
 
             if($this->user->login()) {
@@ -33,6 +33,7 @@ class AuthController {
                     "data" => array(
                         "id" => $this->user->id,
                         "nim_nip" => $this->user->nim_nip,
+                        "email" => $this->user->email,
                         "nama" => $this->user->nama,
                         "role" => $this->user->role
                     )
@@ -44,6 +45,8 @@ class AuthController {
                     "message" => "Login berhasil.",
                     "token" => $jwt,
                     "id" => $this->user->id,
+                    "nim_nip" => $this->user->nim_nip,
+                    "email" => $this->user->email,
                     "nama" => $this->user->nama,
                     "role" => $this->user->role
                 );
@@ -52,7 +55,7 @@ class AuthController {
                 echo json_encode($user_arr);
             } else {
                 http_response_code(401);
-                echo json_encode(array("message" => "Login gagal. NIM/NIP atau password salah."));
+                echo json_encode(array("message" => "Login gagal. Email atau password salah."));
             }
         } else {
             http_response_code(400);
@@ -63,10 +66,11 @@ class AuthController {
     public function register() {
         $data = json_decode(file_get_contents("php://input"));
 
-        if(!empty($data->nim_nip) && !empty($data->nama) && !empty($data->role) && !empty($data->password)) {
+        if(!empty($data->nim_nip) && !empty($data->email) && !empty($data->nama) && !empty($data->password)) {
             $this->user->nim_nip = $data->nim_nip;
+            $this->user->email = $data->email;
             $this->user->nama = $data->nama;
-            $this->user->role = $data->role;
+            $this->user->role = 'Mahasiswa';
             $this->user->password = $data->password;
 
             if($this->user->register()) {

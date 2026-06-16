@@ -10,7 +10,6 @@ class Alat {
     public $foto;
     public $stok_total;
     public $stok_tersedia;
-    public $status;
     public $qr_code;
     public $kategori;
     public $denda_per_hari;
@@ -69,7 +68,6 @@ class Alat {
             $this->foto = $row['foto'];
             $this->stok_total = $row['stok_total'];
             $this->stok_tersedia = $row['stok_tersedia'];
-            $this->status = $row['status'];
             $this->qr_code = $row['qr_code'];
             $this->kategori = isset($row['kategori']) ? $row['kategori'] : "";
             $this->denda_per_hari = isset($row['denda_per_hari']) ? $row['denda_per_hari'] : 0;
@@ -81,7 +79,7 @@ class Alat {
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status, qr_code=:qr_code, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang";
+        $query = "INSERT INTO " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, qr_code=:qr_code, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang";
         
         $stmt = $this->conn->prepare($query);
 
@@ -91,7 +89,6 @@ class Alat {
         $this->foto = htmlspecialchars(strip_tags($this->foto));
         $this->stok_total = htmlspecialchars(strip_tags($this->stok_total));
         $this->stok_tersedia = htmlspecialchars(strip_tags($this->stok_tersedia));
-        $this->status = htmlspecialchars(strip_tags($this->status));
         $this->qr_code = htmlspecialchars(strip_tags($this->qr_code));
         $this->kategori = htmlspecialchars(strip_tags($this->kategori));
         $this->denda_per_hari = htmlspecialchars(strip_tags($this->denda_per_hari));
@@ -104,7 +101,6 @@ class Alat {
         $stmt->bindParam(":foto", $this->foto);
         $stmt->bindParam(":stok_total", $this->stok_total);
         $stmt->bindParam(":stok_tersedia", $this->stok_tersedia);
-        $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":qr_code", $this->qr_code);
         $stmt->bindParam(":kategori", $this->kategori);
         $stmt->bindParam(":denda_per_hari", $this->denda_per_hari);
@@ -118,7 +114,7 @@ class Alat {
     }
 
     public function update() {
-        $query = "UPDATE " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang WHERE id=:id";
+        $query = "UPDATE " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang WHERE id=:id";
         
         $stmt = $this->conn->prepare($query);
 
@@ -128,7 +124,6 @@ class Alat {
         $this->foto = htmlspecialchars(strip_tags($this->foto));
         $this->stok_total = htmlspecialchars(strip_tags($this->stok_total));
         $this->stok_tersedia = htmlspecialchars(strip_tags($this->stok_tersedia));
-        $this->status = htmlspecialchars(strip_tags($this->status));
         $this->kategori = htmlspecialchars(strip_tags($this->kategori));
         $this->denda_per_hari = htmlspecialchars(strip_tags($this->denda_per_hari));
         $this->denda_rusak = htmlspecialchars(strip_tags($this->denda_rusak));
@@ -141,7 +136,6 @@ class Alat {
         $stmt->bindParam(":foto", $this->foto);
         $stmt->bindParam(":stok_total", $this->stok_total);
         $stmt->bindParam(":stok_tersedia", $this->stok_tersedia);
-        $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":kategori", $this->kategori);
         $stmt->bindParam(":denda_per_hari", $this->denda_per_hari);
         $stmt->bindParam(":denda_rusak", $this->denda_rusak);
@@ -152,6 +146,19 @@ class Alat {
             return true;
         }
         return false;
+    }
+
+    public function updateStok() {
+        $query = "UPDATE " . $this->table_name . " SET stok_tersedia = :stok_tersedia WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        
+        $this->stok_tersedia = htmlspecialchars(strip_tags($this->stok_tersedia));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+        
+        $stmt->bindParam(":stok_tersedia", $this->stok_tersedia);
+        $stmt->bindParam(":id", $this->id);
+        
+        return $stmt->execute();
     }
 
     public function delete() {
@@ -184,7 +191,6 @@ class Alat {
             $this->foto = $row['foto'];
             $this->stok_total = $row['stok_total'];
             $this->stok_tersedia = $row['stok_tersedia'];
-            $this->status = $row['status'];
             return true;
         }
         return false;

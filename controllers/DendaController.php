@@ -30,5 +30,35 @@ class DendaController {
             echo json_encode(array("message" => "Data tidak lengkap. Harap sertakan ID denda."));
         }
     }
+
+    public function index() {
+        $search = isset($_GET['search']) ? $_GET['search'] : "";
+        $stmt = $this->denda->readAll($search);
+        
+        $denda_arr = array();
+        $denda_arr["data"] = array();
+        
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            array_push($denda_arr["data"], $row);
+        }
+        
+        http_response_code(200);
+        echo json_encode($denda_arr);
+    }
+
+    public function userDenda($user_data) {
+        $search = isset($_GET['search']) ? $_GET['search'] : "";
+        $stmt = $this->denda->readByUser($user_data->id, $search);
+        
+        $denda_arr = array();
+        $denda_arr["data"] = array();
+        
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            array_push($denda_arr["data"], $row);
+        }
+        
+        http_response_code(200);
+        echo json_encode($denda_arr);
+    }
 }
 ?>
