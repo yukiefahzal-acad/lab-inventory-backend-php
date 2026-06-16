@@ -12,10 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-$request = $_SERVER['REQUEST_URI'];
-$base_path = '/pw2_uas/labbackend/index.php';
-$path = str_replace($base_path, '', $request);
-$path = explode('?', $path)[0];
+$request_uri = $_SERVER['REQUEST_URI'];
+$script_path = dirname($_SERVER['SCRIPT_NAME']);
+$path = parse_url($request_uri, PHP_URL_PATH);
+
+if ($script_path !== '/' && $script_path !== '\\') {
+    if (strpos($path, $script_path) === 0) {
+        $path = substr($path, strlen($script_path));
+    }
+}
+
+if (strpos($path, '/index.php') === 0) {
+    $path = substr($path, strlen('/index.php'));
+}
 
 switch ($path) {
     case '/api/alat':
@@ -40,13 +49,13 @@ switch ($path) {
         }
         break;
 
-    // case '/api/upload':
-    //     require 'controllers/UploadController.php';
-    //     $controller = new UploadController();
-    //     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    //         $controller->uploadFoto();
-    //     }
-    //     break;
+    case '/api/upload':
+        require 'controllers/UploadController.php';
+        $controller = new UploadController();
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $controller->uploadFoto();
+        }
+        break;
 
     case '/api/booking':
         require 'controllers/PeminjamanController.php';

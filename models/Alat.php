@@ -12,14 +12,45 @@ class Alat {
     public $stok_tersedia;
     public $status;
     public $qr_code;
+    public $kategori;
+    public $denda_per_hari;
+    public $denda_rusak;
+    public $denda_hilang;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    public function readAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY nama_alat ASC";
+    public function readAll($search = "", $kategori = "") {
+        $query = "SELECT * FROM " . $this->table_name;
+        $conditions = array();
+
+        if (!empty($search)) {
+            $conditions[] = "(kode_alat LIKE :search OR nama_alat LIKE :search OR spesifikasi LIKE :search)";
+        }
+
+        if (!empty($kategori)) {
+            $kat_arr = explode('|', $kategori);
+            $kat_conditions = array();
+            foreach ($kat_arr as $k) {
+                $kat_conditions[] = "kategori LIKE '%" . htmlspecialchars(strip_tags($k)) . "%'";
+            }
+            $conditions[] = "(" . implode(' OR ', $kat_conditions) . ")";
+        }
+
+        if (count($conditions) > 0) {
+            $query .= " WHERE " . implode(' AND ', $conditions);
+        }
+
+        $query .= " ORDER BY nama_alat ASC";
+
         $stmt = $this->conn->prepare($query);
+
+        if (!empty($search)) {
+            $search_param = "%" . htmlspecialchars(strip_tags($search)) . "%";
+            $stmt->bindParam(":search", $search_param);
+        }
+
         $stmt->execute();
         return $stmt;
     }
@@ -40,13 +71,17 @@ class Alat {
             $this->stok_tersedia = $row['stok_tersedia'];
             $this->status = $row['status'];
             $this->qr_code = $row['qr_code'];
+            $this->kategori = isset($row['kategori']) ? $row['kategori'] : "";
+            $this->denda_per_hari = isset($row['denda_per_hari']) ? $row['denda_per_hari'] : 0;
+            $this->denda_rusak = isset($row['denda_rusak']) ? $row['denda_rusak'] : 0;
+            $this->denda_hilang = isset($row['denda_hilang']) ? $row['denda_hilang'] : 0;
             return true;
         }
         return false;
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status, qr_code=:qr_code";
+        $query = "INSERT INTO " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status, qr_code=:qr_code, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang";
         
         $stmt = $this->conn->prepare($query);
 
@@ -58,6 +93,10 @@ class Alat {
         $this->stok_tersedia = htmlspecialchars(strip_tags($this->stok_tersedia));
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->qr_code = htmlspecialchars(strip_tags($this->qr_code));
+        $this->kategori = htmlspecialchars(strip_tags($this->kategori));
+        $this->denda_per_hari = htmlspecialchars(strip_tags($this->denda_per_hari));
+        $this->denda_rusak = htmlspecialchars(strip_tags($this->denda_rusak));
+        $this->denda_hilang = htmlspecialchars(strip_tags($this->denda_hilang));
 
         $stmt->bindParam(":kode_alat", $this->kode_alat);
         $stmt->bindParam(":nama_alat", $this->nama_alat);
@@ -67,6 +106,10 @@ class Alat {
         $stmt->bindParam(":stok_tersedia", $this->stok_tersedia);
         $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":qr_code", $this->qr_code);
+        $stmt->bindParam(":kategori", $this->kategori);
+        $stmt->bindParam(":denda_per_hari", $this->denda_per_hari);
+        $stmt->bindParam(":denda_rusak", $this->denda_rusak);
+        $stmt->bindParam(":denda_hilang", $this->denda_hilang);
 
         if($stmt->execute()) {
             return true;
@@ -75,22 +118,34 @@ class Alat {
     }
 
     public function update() {
-        $query = "UPDATE " . $this->table_name . " SET nama_alat=:nama_alat, spesifikasi=:spesifikasi, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status WHERE id=:id";
+        $query = "UPDATE " . $this->table_name . " SET kode_alat=:kode_alat, nama_alat=:nama_alat, spesifikasi=:spesifikasi, foto=:foto, stok_total=:stok_total, stok_tersedia=:stok_tersedia, status=:status, kategori=:kategori, denda_per_hari=:denda_per_hari, denda_rusak=:denda_rusak, denda_hilang=:denda_hilang WHERE id=:id";
         
         $stmt = $this->conn->prepare($query);
 
+        $this->kode_alat = htmlspecialchars(strip_tags($this->kode_alat));
         $this->nama_alat = htmlspecialchars(strip_tags($this->nama_alat));
         $this->spesifikasi = htmlspecialchars(strip_tags($this->spesifikasi));
+        $this->foto = htmlspecialchars(strip_tags($this->foto));
         $this->stok_total = htmlspecialchars(strip_tags($this->stok_total));
         $this->stok_tersedia = htmlspecialchars(strip_tags($this->stok_tersedia));
         $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->kategori = htmlspecialchars(strip_tags($this->kategori));
+        $this->denda_per_hari = htmlspecialchars(strip_tags($this->denda_per_hari));
+        $this->denda_rusak = htmlspecialchars(strip_tags($this->denda_rusak));
+        $this->denda_hilang = htmlspecialchars(strip_tags($this->denda_hilang));
         $this->id = htmlspecialchars(strip_tags($this->id));
 
+        $stmt->bindParam(":kode_alat", $this->kode_alat);
         $stmt->bindParam(":nama_alat", $this->nama_alat);
         $stmt->bindParam(":spesifikasi", $this->spesifikasi);
+        $stmt->bindParam(":foto", $this->foto);
         $stmt->bindParam(":stok_total", $this->stok_total);
         $stmt->bindParam(":stok_tersedia", $this->stok_tersedia);
         $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":kategori", $this->kategori);
+        $stmt->bindParam(":denda_per_hari", $this->denda_per_hari);
+        $stmt->bindParam(":denda_rusak", $this->denda_rusak);
+        $stmt->bindParam(":denda_hilang", $this->denda_hilang);
         $stmt->bindParam(":id", $this->id);
 
         if($stmt->execute()) {

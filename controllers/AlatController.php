@@ -13,7 +13,10 @@ class AlatController {
     }
 
     public function index() {
-        $stmt = $this->alat->readAll();
+        $search = isset($_GET['search']) ? $_GET['search'] : "";
+        $kategori = isset($_GET['kategori']) ? $_GET['kategori'] : "";
+
+        $stmt = $this->alat->readAll($search, $kategori);
         $num = $stmt->rowCount();
 
         $alat_arr = array();
@@ -21,19 +24,7 @@ class AlatController {
 
         if($num > 0) {
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                extract($row);
-                $alat_item = array(
-                    "id" => $id,
-                    "kode_alat" => $kode_alat,
-                    "nama_alat" => $nama_alat,
-                    "spesifikasi" => $spesifikasi,
-                    "foto" => $foto,
-                    "stok_total" => $stok_total,
-                    "stok_tersedia" => $stok_tersedia,
-                    "status" => $status,
-                    "qr_code" => $qr_code
-                );
-                array_push($alat_arr["data"], $alat_item);
+                array_push($alat_arr["data"], $row);
             }
             http_response_code(200);
             echo json_encode($alat_arr);
@@ -44,46 +35,31 @@ class AlatController {
     }
 
     public function create() {
-        if(!empty($_POST['kode_alat']) && !empty($_POST['nama_alat']) && !empty($_POST['stok_total'])) {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if(!empty($data->kode_alat) && !empty($data->nama_alat) && !empty($data->stok_total)) {
             
-            $this->alat->kode_alat = $_POST['kode_alat'];
-            $this->alat->nama_alat = $_POST['nama_alat'];
-            $this->alat->spesifikasi = isset($_POST['spesifikasi']) ? $_POST['spesifikasi'] : "";
-            $this->alat->stok_total = $_POST['stok_total'];
-            $this->alat->stok_tersedia = $_POST['stok_total']; // Awal buat, stok tersedia = stok total
-            $this->alat->status = isset($_POST['status']) ? $_POST['status'] : "Tersedia";
+            $this->alat->kode_alat = $data->kode_alat;
+            $this->alat->nama_alat = $data->nama_alat;
+            $this->alat->spesifikasi = isset($data->spesifikasi) ? $data->spesifikasi : "";
+            $this->alat->stok_total = $data->stok_total;
+            $this->alat->stok_tersedia = $data->stok_total;
+            $this->alat->status = isset($data->status) ? $data->status : "Baik";
             
-            $clean_kode_alat = preg_replace('/[^A-Za-z0-9\-]/', '', $_POST['kode_alat']);
+            $clean_kode_alat = preg_replace('/[^A-Za-z0-9\-]/', '', $data->kode_alat);
             $this->alat->qr_code = "QR_" . $clean_kode_alat . "_" . uniqid();
 
-            $nama_foto_baru = ""; 
-            if(isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $target_dir = "uploads/alat/";
-                
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0777, true);
-                }
-
-                $file_extension = pathinfo($_FILES["foto"]["name"], PATHINFO_EXTENSION);
-                
-                $nama_foto_baru = "foto_" . $clean_kode_alat . "_" . uniqid() . "." . $file_extension;
-                $target_file = $target_dir . $nama_foto_baru;
-
-                if (!move_uploaded_file($_FILES["foto"]["tmp_name"], $target_file)) {
-                    http_response_code(500);
-                    echo json_encode(array("message" => "Gagal mengupload foto. Alat batal ditambahkan."));
-                    return; 
-                }
-            }
-            
-            $this->alat->foto = $nama_foto_baru;
+            $this->alat->foto = isset($data->foto) ? $data->foto : "";
+            $this->alat->kategori = isset($data->kategori) ? $data->kategori : "";
+            $this->alat->denda_per_hari = isset($data->denda_per_hari) ? $data->denda_per_hari : 0;
+            $this->alat->denda_rusak = isset($data->denda_rusak) ? $data->denda_rusak : 0;
+            $this->alat->denda_hilang = isset($data->denda_hilang) ? $data->denda_hilang : 0;
 
             if($this->alat->create()) {
                 http_response_code(201);
                 echo json_encode(array(
                     "message" => "Alat berhasil ditambahkan.",
                     "qr_code_generated" => $this->alat->qr_code,
-                    "foto_tersimpan" => $nama_foto_baru
                 ));
             } else {
                 http_response_code(503);
@@ -100,11 +76,17 @@ class AlatController {
 
         if(!empty($data->id) && !empty($data->nama_alat)) {
             $this->alat->id = $data->id;
+            $this->alat->kode_alat = isset($data->kode_alat) ? $data->kode_alat : "";
             $this->alat->nama_alat = $data->nama_alat;
-            $this->alat->spesifikasi = $data->spesifikasi;
-            $this->alat->stok_total = $data->stok_total;
-            $this->alat->stok_tersedia = $data->stok_tersedia;
-            $this->alat->status = $data->status;
+            $this->alat->spesifikasi = isset($data->spesifikasi) ? $data->spesifikasi : "";
+            $this->alat->foto = isset($data->foto) ? $data->foto : "";
+            $this->alat->stok_total = isset($data->stok_total) ? $data->stok_total : 0;
+            $this->alat->stok_tersedia = isset($data->stok_tersedia) ? $data->stok_tersedia : 0;
+            $this->alat->status = isset($data->status) ? $data->status : "Baik";
+            $this->alat->kategori = isset($data->kategori) ? $data->kategori : "";
+            $this->alat->denda_per_hari = isset($data->denda_per_hari) ? $data->denda_per_hari : 0;
+            $this->alat->denda_rusak = isset($data->denda_rusak) ? $data->denda_rusak : 0;
+            $this->alat->denda_hilang = isset($data->denda_hilang) ? $data->denda_hilang : 0;
 
             if($this->alat->update()) {
                 http_response_code(200);
