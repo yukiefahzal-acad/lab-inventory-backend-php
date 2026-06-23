@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /lab/
+
+# 1. Amankan header Authorization untuk JWT
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# 2. Routing semua request ke index.php jika file/folder asli tidak ada
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [QSA,L]

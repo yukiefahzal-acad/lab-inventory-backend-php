@@ -79,8 +79,22 @@ class AlatController {
             $this->alat->nama_alat = $data->nama_alat;
             $this->alat->spesifikasi = isset($data->spesifikasi) ? $data->spesifikasi : "";
             $this->alat->foto = isset($data->foto) ? $data->foto : "";
-            $this->alat->stok_total = isset($data->stok_total) ? $data->stok_total : 0;
-            $this->alat->stok_tersedia = isset($data->stok_tersedia) ? $data->stok_tersedia : 0;
+            $this->alat->stok_total = isset($data->stok_total) ? intval($data->stok_total) : 0;
+
+            // Mengambil data lama untuk menghitung jumlah alat yang sedang dipinjam
+            // agar stok_tersedia tidak ter-reset menjadi 0 saat update info alat.
+            $old_alat = new Alat($this->db);
+            $old_alat->id = $data->id;
+            if ($old_alat->readOne()) {
+                $dipinjam = intval($old_alat->stok_total) - intval($old_alat->stok_tersedia);
+                if ($dipinjam < 0) $dipinjam = 0;
+                $this->alat->stok_tersedia = $this->alat->stok_total - $dipinjam;
+                if ($this->alat->stok_tersedia < 0) {
+                    $this->alat->stok_tersedia = 0;
+                }
+            } else {
+                $this->alat->stok_tersedia = $this->alat->stok_total;
+            }
             $this->alat->kategori = isset($data->kategori) ? $data->kategori : "";
             $this->alat->denda_per_hari = isset($data->denda_per_hari) ? $data->denda_per_hari : 0;
             $this->alat->denda_rusak = isset($data->denda_rusak) ? $data->denda_rusak : 0;
@@ -106,16 +120,39 @@ class AlatController {
             $this->alat->id = $data->id;
             
             $this->alat->readOne();
-            if(!empty($this->alat->foto) && file_exists($this->alat->foto)) {
-                unlink($this->alat->foto);
+            // Delete all associated files
+            if(!empty($this->alat->foto)) {
+                $foto_list = explode('|', $this->alat->foto);
+                foreach ($foto_list as $foto_url) {
+                    if (empty($foto_url)) continue;
+                    $url_path = parse_url($foto_url, PHP_URL_PATH);
+                    $script_path = dirname($_SERVER['SCRIPT_NAME']);
+                    if ($script_path !== '/' && $script_path !== '\\') {
+                        if (strpos($url_path, $script_path) === 0) {
+                            $url_path = substr($url_path, strlen($script_path));
+                        }
+                    }
+                    $local_file = ltrim($url_path, '/');
+                    if (file_exists($local_file)) {
+                        @unlink($local_file);
+                    }
+                }
             }
 
-            if($this->alat->delete()) {
-                http_response_code(200);
-                echo json_encode(array("message" => "Alat berhasil dihapus."));
-            } else {
-                http_response_code(503);
-                echo json_encode(array("message" => "Gagal menghapus alat."));
+            try {
+                if($this->alat->delete()) {
+                    http_response_code(200);
+                    echo json_encode(array("message" => "Alat berhasil dihapus."));
+                } else {
+                    http_response_code(503);
+                    echo json_encode(array("message" => "Gagal menghapus alat."));
+                }
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(array("message" => "Gagal menghapus alat: " . $e->getMessage()));
+            } catch (PDOException $e) {
+                http_response_code(500);
+                echo json_encode(array("message" => "Gagal menghapus alat: " . $e->getMessage()));
             }
         } else {
             http_response_code(400);

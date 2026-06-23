@@ -64,7 +64,7 @@ class Denda {
     }
 
     public function readAll($search = "") {
-        $query = "SELECT d.*, u.nama as nama_mahasiswa, a.nama_alat FROM " . $this->table_name . " d 
+        $query = "SELECT d.*, p.user_id, u.nama as nama_mahasiswa, a.nama_alat FROM " . $this->table_name . " d 
                   JOIN tb_peminjaman p ON d.peminjaman_id = p.id
                   JOIN tb_users u ON p.user_id = u.id
                   JOIN tb_alat a ON p.alat_id = a.id";
@@ -86,7 +86,7 @@ class Denda {
     }
 
     public function readByUser($user_id, $search = "") {
-        $query = "SELECT d.*, a.nama_alat FROM " . $this->table_name . " d 
+        $query = "SELECT d.*, p.user_id, a.nama_alat FROM " . $this->table_name . " d 
                   JOIN tb_peminjaman p ON d.peminjaman_id = p.id
                   JOIN tb_alat a ON p.alat_id = a.id
                   WHERE p.user_id = :user_id";

@@ -162,6 +162,19 @@ class Alat {
     }
 
     public function delete() {
+        // Delete denda records referencing this tool's bookings
+        $queryDenda = "DELETE d FROM tb_denda d JOIN tb_peminjaman p ON d.peminjaman_id = p.id WHERE p.alat_id = ?";
+        $stmtDenda = $this->conn->prepare($queryDenda);
+        $stmtDenda->bindParam(1, $this->id);
+        $stmtDenda->execute();
+
+        // Delete peminjaman records referencing this tool
+        $queryPeminjaman = "DELETE FROM tb_peminjaman WHERE alat_id = ?";
+        $stmtPeminjaman = $this->conn->prepare($queryPeminjaman);
+        $stmtPeminjaman->bindParam(1, $this->id);
+        $stmtPeminjaman->execute();
+
+        // Finally delete the tool itself
         $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
         $stmt = $this->conn->prepare($query);
         $this->id = htmlspecialchars(strip_tags($this->id));

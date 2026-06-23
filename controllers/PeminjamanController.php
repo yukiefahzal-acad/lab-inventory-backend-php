@@ -123,7 +123,7 @@ class PeminjamanController
 
     public function riwayat($user_data)
     {
-        $user_id = ($user_data && $user_data->role !== 'admin') ? $user_data->id : (isset($_GET['user_id']) ? $_GET['user_id'] : null);
+        $user_id = ($user_data && strtolower($user_data->role) !== 'admin') ? $user_data->id : (isset($_GET['user_id']) ? $_GET['user_id'] : null);
         $search = isset($_GET['search']) ? $_GET['search'] : "";
 
         $stmt = $this->peminjaman->readHistory($user_id, $search);

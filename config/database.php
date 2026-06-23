@@ -1,10 +1,11 @@
 <?php
 class Database {
-    private $host = "localhost";
-    private $db_name = "lab_inventory";
-    private $username = "root";
-    private $password = "";
-
+    private $host = "sql211.infinityfree.com";
+    private $db_name = "if0_42222732_lab_inventory";
+    private $username = "if0_42222732";
+    private $password = "gnToXLyWVR4a";
+	private $port = 3306;
+    
     public $conn;
 
     // Fungsi untuk mendapatkan koneksi database
@@ -12,7 +13,7 @@ class Database {
         $this->conn = null;
 
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $this->conn = new PDO("mysql:host=" . $this->host . ";port=" . $this->port . ";dbname=" . $this->db_name, $this->username, $this->password);
             
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             

@@ -8,11 +8,13 @@ use \Firebase\JWT\Key;
 class AuthMiddleware {
     
     public static function authenticate() {
-        $headers = apache_request_headers();
-        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        $authHeader = null;
 
-        if (!$authHeader && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        // Ambil header Authorization langsung dari $_SERVER (Aman untuk InfinityFree)
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         }
 
         if ($authHeader) {
